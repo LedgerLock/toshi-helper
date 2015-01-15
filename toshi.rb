@@ -193,7 +193,4 @@ class Toshi
       end
     end
 
-    def foo
-      'bar'
-    end
 end
