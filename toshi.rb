@@ -191,5 +191,9 @@ class Toshi
       else
         raise "Expected #{id} to be either a valid #{BITCOIN_NETWORK} address, txid, blockid or block-height but it is of class #{id.class}"
       end
-    end    
+    end
+
+    def foo
+      'bar'
+    end
 end
