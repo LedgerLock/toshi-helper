@@ -11,6 +11,14 @@ class Toshi
     @url = set_url(@network)
   end
 
+  def online?
+    begin
+      call_api == not_found
+    rescue Errno::ECONNREFUSED
+      return false
+    end
+  end
+
   def address(address)
     check_address(address)
     call_api('addresses', address)   
