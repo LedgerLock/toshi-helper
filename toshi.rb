@@ -166,7 +166,7 @@ class Toshi
           if data == not_found
             not_found
           else
-            data['transactions'].concat(data['unconfirmed_transactions'])
+            (data['transactions'] || []).concat(data['unconfirmed_transactions'] || [])
           end
         when 64
           # first try txid, if not found, try blockid
