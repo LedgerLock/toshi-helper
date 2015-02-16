@@ -8,7 +8,7 @@ class Toshi
   attr_reader :network, :url
   def initialize(network=BITCOIN_NETWORK)
     @network = network
-    @url = set_url(@network)
+    @url = set_url(@network) 
   end
 
   def online?
