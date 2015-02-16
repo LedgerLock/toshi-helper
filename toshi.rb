@@ -77,7 +77,7 @@ class Toshi
     end
   end
 
-  def balance(address)
+  def balance(address) 
     check_address(address)
     data = self.address(address)
     return {total: 0, unconfirmed: 0} if data == not_found
