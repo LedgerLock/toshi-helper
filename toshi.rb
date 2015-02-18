@@ -80,8 +80,11 @@ class Toshi
   def balance(address) 
     check_address(address)
     data = self.address(address)
-    return {total: 0, unconfirmed: 0} if data == not_found
-    {total: data['balance'].to_i+data['unconfirmed_balance'].to_i, unconfirmed: data['unconfirmed_balance'].to_i}
+    if data == not_found
+      return {confirmed: 0, unconfirmed: 0} if data == not_found  
+    else
+      return {confirmed: data['balance'].to_i, unconfirmed: data['unconfirmed_balance'].to_i}
+    end
   end
 
   def create_tx(utxo_txid,private_key,recipient_address,amount,fee)
