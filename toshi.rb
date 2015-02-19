@@ -87,13 +87,16 @@ class Toshi
     end
   end
 
-  def create_tx(utxo_txid,private_key,recipient_address,amount,fee)
+  def create_tx(utxo_txid,private_key,recipient_address,amount,fee, change_address=nil)
     key = get_key(private_key, @network)
+    source_address = key.addr
+    change_address = source_address if change_address.nil?
     utxo = self.tx(utxo_txid)    
     # figuring out the index and balance from the utxo txid and the private key
-    utxo_data = utxo['outputs'].each_with_index.map{|o,i| {idx: i, amount: o['amount'] }if o['addresses'].include?(key.addr)}.compact[0]
+    utxo_data = utxo['outputs'].each_with_index.map{|o,i| {idx: i, amount: o['amount'] }if o['addresses'].include?(source_address)}.compact[0]
     balance = utxo_data[:amount]
     utxo_index = utxo_data[:idx]
+    
     new_tx = build_tx do |t|
      
      t.input do |i|  
@@ -109,7 +112,7 @@ class Toshi
      
      t.output do |o|  
        o.value balance - amount - fee # in satoshis    
-       o.script {|s| s.recipient key.addr }    
+       o.script {|s| s.recipient change_address }    
      end    
     end
     new_tx   
