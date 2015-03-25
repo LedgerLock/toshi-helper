@@ -118,6 +118,33 @@ class Toshi
     new_tx   
   end
 
+  def create_general_tx(utxo_txids,private_keys,recipient_addresses,amounts)
+    keys = private_keys.map{|pk| get_key(pk, @network)}
+    source_addresses = keys.map{|k| k.addr}
+    utxos = utxo_txids.map{|utxo_txid| self.tx(utxo_txid) }
+    # figuring out the index and balance from the utxo txid and the private key
+    utxos_data = utxos.each_with_index.map{|utxo,n| utxo['outputs'].each_with_index.map{|o,i| {idx: i, amount: o['amount'] } if o['addresses'].include?(source_addresses[n])}.compact[0]}
+
+    new_tx = build_tx do |t|
+    
+      utxos.each_with_index do |utxo, n|
+        t.input do |i|
+          i.prev_out Bitcoin::P::Tx.from_json(utxo.to_json)
+          i.prev_out_index utxos_data[n][:idx]
+          i.signature_key keys[n]
+        end
+      end
+
+      recipient_addresses.each_with_index do |recipient,n|
+        t.output do |o|
+          o.value amounts[n] # in satoshis
+          o.script {|s| s.recipient recipient }
+        end
+      end
+    end
+    new_tx   
+  end
+
   def sendrawtx(rawtx)
     txhash = { "hex" => rawtx }
     ApiPoster.new(@url+'transactions',nil, {ssl: (@network.to_sym != :regtest)}, txhash.to_json )
