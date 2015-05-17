@@ -8,7 +8,7 @@ class Toshi
   attr_reader :network, :url
   def initialize(network=BITCOIN_NETWORK)
     @network = network
-    @url = set_url(@network) 
+    @url = self.class.get_url(@network) 
   end
 
   def online?
@@ -164,7 +164,7 @@ class Toshi
       self.class.not_found
     end
 
-    def set_url(network)
+    def self.get_url(network=BITCOIN_NETWORK)
       case network.to_sym
       when :testnet
         return 'https://testnet3.toshi.io/api/v0/'
