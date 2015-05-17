@@ -6,9 +6,10 @@ include TxHelper
 
 class Toshi
   attr_reader :network, :url
+  delegate :not_found, to: :class
   def initialize(network=BITCOIN_NETWORK)
     @network = network
-    @url = self.class.get_url(@network) 
+    @url = get_url(@network) 
   end
 
   def online?
@@ -160,11 +161,7 @@ class Toshi
 
   private
 
-    def not_found
-      self.class.not_found
-    end
-
-    def self.get_url(network=BITCOIN_NETWORK)
+    def get_url(network=BITCOIN_NETWORK)
       case network.to_sym
       when :testnet
         return 'https://testnet3.toshi.io/api/v0/'
