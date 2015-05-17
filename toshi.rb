@@ -18,6 +18,10 @@ class Toshi
       return false
     end
   end
+  
+  def status
+    call_api('toshi.json')['status']
+  end
 
   def address(address)
     check_address(address)
