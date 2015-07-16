@@ -123,7 +123,7 @@ class Toshi
     new_tx   
   end
 
-  def create_general_tx(utxo_txids,private_keys,recipient_addresses,amounts)
+  def create_general_tx(utxo_txids,private_keys,recipient_addresses,amounts,op_return='')
     keys = private_keys.map{|pk| get_key(pk, @network)}
     source_addresses = keys.map{|k| k.addr}
     utxos = utxo_txids.map{|utxo_txid| self.tx(utxo_txid) }
@@ -139,13 +139,16 @@ class Toshi
           i.signature_key keys[n]
         end
       end
-
       recipient_addresses.each_with_index do |recipient,n|
         t.output do |o|
           o.value amounts[n] # in satoshis
           o.script {|s| s.recipient recipient }
         end
       end
+      t.output do |o|
+        o.value(0)
+        o.script {|s| s.type(:op_return); s.recipient(op_return.unpack('H*').first)} 
+      end unless op_return.blank?
     end
     new_tx   
   end
