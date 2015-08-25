@@ -63,18 +63,19 @@ class Toshi
     self.block['height']
   end
 
-  def tx(id = nil, confirmations = nil)
+  def tx(id,opts={})
+    confirmations = opts[:confirmations] if opts
     if confirmations.nil?
-      get_tx(id)
+      get_tx(id,opts)
     else
-      txdata = get_tx(id)
+      txdata = get_tx(id,opts)
       txdata = ([] << txdata) unless txdata.is_a? Array
       txdata.select{|t| t['confirmations'].to_i == confirmations.to_i}
     end
   end
 
-  def txid(id = nil, confirmations = nil)
-    txdata = self.tx(id, confirmations)
+  def txid(id = nil, opts={})    
+    txdata = self.tx(id, opts)
     if txdata.is_a? Array
       txdata.map{|t| t['hash']}
     else
@@ -178,8 +179,7 @@ class Toshi
     end
 
     def call_api(*args)
-      query = args.join('/')+'?limit=999999'
-      url = @url+query
+      url = generate_api_url(*args)
       begin
        response = JSON.parse(open(url).read)
       rescue OpenURI::HTTPError
@@ -188,18 +188,43 @@ class Toshi
       return response
     end
 
+    def generate_api_url(*args)
+      opts = args.select{|a| a.is_a?(Hash)}.first
+      if opts
+        args.delete(opts)
+        limit = opts[:limit]
+        offset = opts[:offset]  
+      end
+      if limit
+        if limit > 0 && offset
+          query = args.join('/')+"?limit=#{limit}&offset=#{offset}"
+        elsif limit == 0
+          query = args.join('/')
+        else
+          query = args.join('/')+"?limit=#{limit}"  
+        end
+      elsif offset
+        query = args.join('/')+"?limit=999999&offset=#{offset}"
+      else
+        query = args.join('/')+'?limit=999999'
+      end
+      response = @url+query
+      Rails.logger.debug("calling api with #{response}")
+      return response
+    end
+
     def check_address(address)
       raise 'Invalid Bitcoin Address' unless valid_address?(address,@network)  
     end
 
-    def get_tx(id=nil)
+    def get_tx(id,opts={})
       # id can be an address, txid, blockid (strings) or block-height (fixnum)
       if id.is_a? String
         case id.length
         when 26..35
           address = id      
           check_address(address)   
-          data = call_api('addresses', address, 'transactions')
+          data = call_api('addresses', address, 'transactions',opts)
           if data == not_found
             not_found
           else
@@ -207,8 +232,8 @@ class Toshi
           end
         when 64
           # first try txid, if not found, try blockid
-          data = call_api('transactions',id)
-          data = call_api('blocks',id,'transactions') if data == not_found
+          data = call_api('transactions',id,opts)
+          data = call_api('blocks',id,'transactions',opts) if data == not_found
           if data == not_found
             return not_found
           else
@@ -224,14 +249,14 @@ class Toshi
       elsif id.is_a? Fixnum
         if id >= 0 && id <= self.count
           hash = self.block(id)['hash']
-          data = call_api('blocks',hash,'transactions')
+          data = call_api('blocks',hash,'transactions',opts)
           return data['transactions']
         else
           raise "No block with this height"
         end
       elsif id.nil?
         hash = self.block['hash']
-        data = call_api('blocks',hash,'transactions')
+        data = call_api('blocks',hash,'transactions',opts)
         return data['transactions']
       else
         raise "Expected #{id} to be either a valid #{BITCOIN_NETWORK} address, txid, blockid or block-height but it is of class #{id.class}"
