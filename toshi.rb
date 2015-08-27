@@ -208,9 +208,9 @@ class Toshi
       else
         query = args.join('/')+'?limit=999999'
       end
-      response = @url+query
-      Rails.logger.debug("calling api with #{response}")
-      return response
+      endpoint = @url+query
+      # Rails.logger.debug("calling api with #{endpoint}")
+      return endpoint
     end
 
     def check_address(address)
