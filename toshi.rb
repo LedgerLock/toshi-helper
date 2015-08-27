@@ -248,11 +248,10 @@ class Toshi
         end      
       elsif id.is_a? Fixnum
         if id >= 0 && id <= self.count
-          hash = self.block(id)['hash']
-          data = call_api('blocks',hash,'transactions',opts)
+          data = call_api('blocks',id,'transactions',opts)
           return data['transactions']
         else
-          raise "No block with this height"
+          raise "No block with height [#{id}] on #{@network}"
         end
       elsif id.nil?
         hash = self.block['hash']
