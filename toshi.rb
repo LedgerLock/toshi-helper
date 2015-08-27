@@ -253,9 +253,13 @@ class Toshi
           raise "Expected #{id} either a valid #{BITCOIN_NETWORK} address, txid, blockid"
         end      
       elsif id.is_a? Fixnum
-        if id >= 0 && id <= self.count
+        if id >= 0          
           data = call_api('blocks',id,'transactions',opts)
-          return data['transactions']
+          if data == not_found
+            raise "No block with height [#{id}] on #{@network}"
+          else
+            return data['transactions']  
+          end            
         else
           raise "No block with height [#{id}] on #{@network}"
         end
