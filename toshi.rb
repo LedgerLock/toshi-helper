@@ -232,17 +232,23 @@ class Toshi
           end
         when 64
           # first try txid, if not found, try blockid
-          data = call_api('transactions',id,opts)
-          data = call_api('blocks',id,'transactions',opts) if data == not_found
-          if data == not_found
-            return not_found
+          if opts[:block]
+            # in case we want to save the extra call to check if tx
+            data = call_api('blocks',id,'transactions',opts)
+            return data['transactions']
           else
-            if data['transactions'] #we got a block
-              data['transactions']
-            else # we got a tx
-              data
-            end
-          end
+            data = call_api('transactions',id,opts)
+            data = call_api('blocks',id,'transactions',opts) if data == not_found
+            if data == not_found
+              return not_found
+            else
+              if data['transactions'] #we got a block
+                data['transactions']
+              else # we got a tx
+                data
+              end
+            end            
+          end          
         else
           raise "Expected #{id} either a valid #{BITCOIN_NETWORK} address, txid, blockid"
         end      
