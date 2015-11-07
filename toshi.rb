@@ -154,6 +154,33 @@ class Toshi
     new_tx   
   end
 
+  def create_cashout_tx(private_key,recipient_addresses,fee)
+    # transfer entire balance in an address (minus fee) to another address
+    key = get_key(private_key, @network)
+    source_address = key.addr
+    utxos_data = self.utxo(source_address)
+    utxos_txids = utxos_data.map{|u| u[:txid]}
+    amounts = utxos_data.map{|u| u[:amount]}.sum
+    utxos = utxos_txids.map{|utxo_txid| self.tx(utxo_txid) }
+
+    new_tx = build_tx do |t|
+    
+      utxos.each_with_index do |utxo, n|
+        t.input do |i|
+          i.prev_out Bitcoin::P::Tx.from_json(utxo.to_json)
+          i.prev_out_index utxos_data[n][:idx]
+          i.signature_key key
+        end
+      end
+      
+      t.output do |o|
+        o.value amounts-fee # in satoshis
+        o.script {|s| s.recipient recipient_addresses }
+      end
+    end
+    new_tx   
+  end
+
   def sendrawtx(rawtx)
     txhash = { "hex" => rawtx }
     ApiPoster.new(@url+'transactions',nil, {ssl: (@network.to_sym != :regtest)}, txhash.to_json )
