@@ -154,7 +154,36 @@ class Toshi
     new_tx   
   end
 
-  def create_cashout_tx(private_key,recipient_addresses,fee)
+  def create_multiple_addresses_cashout_tx(private_keys,recipient_addresses,fee)
+    # transfer entire balance in a list of addresses (minus fee) to another address
+    keys = private_keys.map{|pk| get_key(pk, @network)}
+    source_addresses = keys.map{|k| k.addr}
+    size = keys.count
+    utxos_data = source_addresses.map{|a| self.utxo(a)}
+    utxos_txids = utxos_data.map{|ua| ua.map{|u| u[:txid]}}
+    amounts = utxos_data.flatten.map{|u| u[:amount]}.sum
+    utxos = utxos_txids.map{|utx| utx.map{|utxo_txid| self.tx(utxo_txid) }}
+    sleep 1
+    new_tx = build_tx do |t|
+      size.times do |s|
+        utxos[s].each_with_index do |utxo, n|
+          t.input do |i|
+            i.prev_out Bitcoin::P::Tx.from_json(utxo.to_json)
+            i.prev_out_index utxos_data[s][n][:idx]
+            i.signature_key keys[s]
+          end
+        end
+      end
+
+      t.output do |o|
+        o.value amounts-fee # in satoshis
+        o.script {|s| s.recipient recipient_addresses }
+      end
+    end
+    new_tx   
+  end
+
+  def create_single_address_cashout_tx(private_key,recipient_addresses,fee)
     # transfer entire balance in an address (minus fee) to another address
     key = get_key(private_key, @network)
     source_address = key.addr
