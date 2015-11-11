@@ -162,6 +162,7 @@ class Toshi
     utxos_data = source_addresses.map{|a| self.utxo(a)}
     utxos_txids = utxos_data.map{|ua| ua.map{|u| u[:txid]}}
     amounts = utxos_data.flatten.map{|u| u[:amount]}.sum
+    amount_per_payee = (amounts-fee)/recipient_addresses.count
     utxos = utxos_txids.map{|utx| utx.map{|utxo_txid| self.tx(utxo_txid) }}
     sleep 1
     new_tx = build_tx do |t|
@@ -174,10 +175,11 @@ class Toshi
           end
         end
       end
-
-      t.output do |o|
-        o.value amounts-fee # in satoshis
-        o.script {|s| s.recipient recipient_addresses }
+      recipient_addresses.each_with_index do |recipient,n|
+        t.output do |o|
+          o.value amount_per_payee # in satoshis
+          o.script {|s| s.recipient recipient }
+        end
       end
     end
     new_tx   
