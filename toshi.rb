@@ -158,7 +158,6 @@ class Toshi
     # transfer entire balance in a list of addresses (minus fee) to another address
     keys = private_keys.map{|pk| get_key(pk, @network)}
     source_addresses = keys.map{|k| k.addr}
-    size = keys.count
     utxos_data = source_addresses.map{|a| self.utxo(a)}.reject{|u| u==self.not_found}
     raise ArgumentError, 'No UTXOs in source addresses' if utxos_data.empty?
     utxos_txids = utxos_data.map{|ua| ua.map{|u| u[:txid]}}
@@ -190,7 +189,6 @@ class Toshi
     # transfer entire balance in a list of addresses (minus fee) to another address
     keys = private_keys.map{|pk| get_key(pk, @network)}
     source_addresses = keys.map{|k| k.addr}
-    size = keys.count
     utxos_data = source_addresses.each_with_index.map{|a,n| extract_utxos(utxos_array[n],a)}.reject{|u| u==self.not_found}
     raise ArgumentError, 'No UTXOs in source addresses' if utxos_data.empty?
     utxos_txids = utxos_data.map{|ua| ua.map{|u| u[:txid]}}
