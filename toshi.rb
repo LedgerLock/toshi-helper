@@ -14,14 +14,15 @@ class Toshi
 
   def online?
     begin
-      call_api == not_found
-    rescue Errno::ECONNREFUSED
+      status == 'active'
+    rescue => e
+      Rails.logger.error("Toshi is offline: [#{e}]")
       return false
     end
   end
   
   def status
-    call_api('toshi.json')['status']
+    call_api('toshi')['status']
   end
 
   def address(address)
